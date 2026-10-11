@@ -5,6 +5,7 @@ from pathlib import Path
 import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
 
 # --------------------------------------------------
 # 1. Configure paths
@@ -53,6 +54,14 @@ app = FastAPI(
         "customer-support message."
     ),
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

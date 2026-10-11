@@ -1,69 +1,156 @@
-import Image from "next/image";
+
+"use client";
+
+import { useState } from "react";
+
+type PredictionResponse = {
+  input_text: string;
+  predicted_label: number;
+  predicted_intent: string;
+};
 
 export default function Home() {
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handlePredict() {
+    const text = message.trim();
+
+    if (!text) {
+      setError("Please enter a customer message.");
+      setResult(null);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Unable to predict the intent. Please try again."
+        );
+      }
+
+      setResult(data as PredictionResponse);
+    } catch {
+      setError(
+        "Could not connect to the API. Check that your FastAPI backend is running."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-slate-950 px-4 py-12 text-white sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <header className="mb-10 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+            AI-Powered NLP Project
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
+            Customer Support
+            <span className="block text-cyan-400">
+              Intent Classifier
+            </span>
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-xl text-slate-300">
+            Enter a banking customer message and let the trained NLP model
+            identify its intent.
+          </p>
+        </header>
+
+        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-8">
+          <label
+            htmlFor="customer-message"
+            className="mb-3 block text-sm font-medium text-slate-200"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Customer message
+          </label>
+
+          <textarea
+            id="customer-message"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Example: My card has not arrived yet..."
+            maxLength={2000}
+            rows={5}
+            className="w-full resize-y rounded-xl border border-slate-600 bg-slate-950 p-4 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+          />
+
+          <div className="mt-2 text-right text-xs text-slate-400">
+            {message.length}/2000 characters
+          </div>
+
+          <button
+            type="button"
+            onClick={handlePredict}
+            disabled={loading}
+            className="mt-5 w-full rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {loading ? "Analyzing message..." : "Predict Intent"}
+          </button>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
+            >
+              {error}
+            </div>
+          )}
+
+          {result && (
+            <div
+              aria-live="polite"
+              className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5"
+            >
+              <p className="text-sm font-medium text-emerald-300">
+                Predicted intent
+              </p>
+
+              <h2 className="mt-2 break-words text-2xl font-bold text-white">
+                {result.predicted_intent.replaceAll("_", " ")}
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-300">
+                Label ID: {result.predicted_label}
+              </p>
+
+              <div className="mt-4 border-t border-emerald-500/20 pt-4">
+                <p className="text-xs uppercase tracking-wider text-slate-400">
+                  Analyzed message
+                </p>
+                <p className="mt-2 break-words text-sm text-slate-200">
+                  {result.input_text}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <footer className="mt-8 text-center text-sm text-slate-500">
+          Powered by TF-IDF and Linear SVM · Banking77 dataset
+        </footer>
+      </div>
+    </main>
   );
 }
