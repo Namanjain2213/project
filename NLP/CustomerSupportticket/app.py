@@ -58,7 +58,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000","https://customersupportticket.vercel.app/","https://customersupportticket-git-main-naman-jains-projects-ffa23343.vercel.app/","https://customersupportticket-j0graet7u-naman-jains-projects-ffa23343.vercel.app/"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000","https://customersupportticket.vercel.app","https://customersupportticket-git-main-naman-jains-projects-ffa23343.vercel.app","https://customersupportticket-j0graet7u-naman-jains-projects-ffa23343.vercel.app"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
